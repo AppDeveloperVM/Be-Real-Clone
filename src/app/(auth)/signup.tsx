@@ -40,8 +40,33 @@ export default function SignupScreen() {
     setIsLoading(true);
     try {
       await signUp(email, password);
-    } catch (error) {
-      Alert.alert("Error", "Failed to sign up");
+      router.push("/(auth)/onboarding");
+    } catch (error: any) {
+      const message = error?.message || error?.toString() || "";
+
+      if (message.includes("Email address") && message.includes("invalid")) {
+        Alert.alert(
+          "Email Inválido",
+          "Por favor, introduce una dirección de correo real (ejemplo@correo.com).",
+        );
+      } else if (message.includes("User already registered")) {
+        Alert.alert(
+          "Usuario existente",
+          "Este correo ya está registrado. Intenta iniciar sesión.",
+        );
+      } else if (message.includes("Password should be at least")) {
+        Alert.alert(
+          "Contraseña débil",
+          "La contraseña debe tener al menos 6 caracteres.",
+        );
+      } else {
+        // Error genérico para casos inesperados
+        Alert.alert(
+          "Error en el registro",
+          "No pudimos crear tu cuenta. Inténtalo de nuevo más tarde.",
+        );
+        console.error("Error original:", message);
+      }
     } finally {
       setIsLoading(false);
     }
