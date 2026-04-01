@@ -17,21 +17,7 @@ export default function TabsLayout() {
           ),
         }}
       />
-      <Tabs.Screen
-        name="about"
-        options={{
-          title: "About",
-          tabBarIcon: ({ color, size, focused }) => (
-            <Ionicons
-              name={
-                focused ? "information-circle" : "information-circle-outline"
-              }
-              color={color}
-              size={size}
-            />
-          ),
-        }}
-      />
+
       <Tabs.Screen
         name="profile"
         options={{
