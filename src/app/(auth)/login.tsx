@@ -1,6 +1,14 @@
+import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "expo-router";
-import React from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import React, { useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import {
   GestureHandlerRootView,
   TextInput,
@@ -8,7 +16,40 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function LoginScreen() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const { signIn } = useAuth();
+
   const router = useRouter();
+
+  const handleLogin = async () => {
+    setIsLoading(true);
+    if (!email || !password) {
+      Alert.alert("Error", "Please fill in all fields");
+      setIsLoading(false);
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await signIn(email, password);
+      router.push("/(tabs)");
+    } catch (error: any) {
+      const message = error?.message || error?.toString() || "";
+
+      if (message) {
+        // Error genérico para casos inesperados
+        Alert.alert(
+          "Error en el registro",
+          "No pudimos iniciar sesión. Comprueba las credenciales.",
+        );
+        console.error("Error original:", message);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -22,6 +63,8 @@ export default function LoginScreen() {
               placeholderTextColor={"#999"}
               keyboardType="email-address"
               autoComplete="email"
+              onChangeText={setEmail}
+              value={email}
               autoCapitalize="none"
               style={styles.input}
             />
@@ -29,11 +72,17 @@ export default function LoginScreen() {
               placeholder="Password"
               placeholderTextColor={"#999"}
               autoComplete="password"
+              onChangeText={setPassword}
+              value={password}
               secureTextEntry
               style={styles.input}
             />
-            <TouchableOpacity style={styles.button} onPress={() => {}}>
-              <Text style={styles.buttonText}>Sign In</Text>
+            <TouchableOpacity style={styles.button} onPress={handleLogin}>
+              {isLoading ? (
+                <ActivityIndicator size={24} color="#fff" />
+              ) : (
+                <Text style={styles.buttonText}>SignIn</Text>
+              )}
             </TouchableOpacity>
 
             <TouchableOpacity
