@@ -50,7 +50,6 @@ export const uploadPostImage = async (userId: string, imageUri: string) => {
     const fileExtension = imageUri.split(".").pop()?.toLowerCase() || "jpg";
     const path = `${session.user.id}/${Date.now()}.${fileExtension}`;
 
-    // --- NUEVA FORMA ---
     // 1. Instanciamos el archivo
     const file = new File(imageUri);
 
@@ -64,7 +63,7 @@ export const uploadPostImage = async (userId: string, imageUri: string) => {
       .from("posts")
       .upload(path, decode(base64), {
         contentType: `image/${fileExtension === "jpg" ? "jpeg" : fileExtension}`,
-        upsert: true,
+        upsert: false,
       });
 
     if (error) throw error;

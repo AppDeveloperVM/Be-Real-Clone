@@ -59,7 +59,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .from("profiles")
         .select("*")
         .eq("id", userId)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.log("Error fetching profile:", error);
@@ -130,10 +130,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(tempUser);
 
       // 3. Intentamos buscar el perfil real creado por el trigger
-      const profile = await fetchUserProfile(data.user.id);
-      if (profile) {
-        setUser(profile);
-      }
+      setTimeout(async () => {
+        if (!data.user) return;
+        const profile = await fetchUserProfile(data.user.id);
+        if (profile) setUser(profile);
+      }, 1500);
     }
   };
 

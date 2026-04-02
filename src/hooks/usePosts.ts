@@ -40,8 +40,7 @@ export const usePosts = () => {
         .select(
           `
             *,
-            profiles(id, name, username, profile_image_url)
-            `,
+            profiles(id, name, username, profile_image_url)`,
         )
         .eq("is_active", true)
         .gt("expires_at", new Date().toISOString())
@@ -64,7 +63,7 @@ export const usePosts = () => {
 
       setPosts(postsWithProfiles);
     } catch (error) {
-      console.error("Error in loadPosts");
+      console.error("Error in loadPosts:", error);
     } finally {
       setIsLoading(false);
     }
@@ -76,6 +75,17 @@ export const usePosts = () => {
     }
 
     try {
+      // Deactivate any existing posts
+      const { error: deactivateError } = await supabase
+        .from("posts")
+        .update({ is_active: false })
+        .eq("user_id", user.id)
+        .eq("is_active", true);
+
+      if (deactivateError) {
+        console.error("Error deactivating old posts:", deactivateError);
+      }
+
       const imageUrl = await uploadPostImage(user.id, imageUri);
 
       // Calculate expiration time
@@ -98,11 +108,18 @@ export const usePosts = () => {
         console.error("Error creating post:", error);
         throw error;
       }
+
+      // Refresh posts
+      await loadPosts();
     } catch (error) {
       console.error("Error in createPost:", error);
       throw error;
     }
   };
 
-  return { createPost, posts };
+  const refreshPosts = async () => {
+    await loadPosts();
+  };
+
+  return { createPost, posts, refreshPosts };
 };
