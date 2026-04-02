@@ -88,6 +88,15 @@ export default function Index() {
   const { createPost, posts } = usePosts();
   const { user } = useAuth();
 
+  // check if user has an active post
+  const userActivePost = posts.find(
+    (post) =>
+      post.user_id === user?.id &&
+      post.is_active &&
+      new Date(post.expires_at) > new Date(),
+  );
+  const hasActivePost = !!userActivePost;
+
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
@@ -170,13 +179,15 @@ export default function Index() {
       <FlatList data={posts} renderItem={renderPost} />
 
       <TouchableOpacity style={styles.fab} onPress={showImagePicker}>
-        <Text style={styles.fabText}>+</Text>
+        <Text style={styles.fabText}>{hasActivePost ? "↻" : "+"}</Text>
       </TouchableOpacity>
 
       <Modal visible={showPreview} transparent animationType="fade">
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Preview your post</Text>
+            <Text style={styles.modalTitle}>
+              {hasActivePost ? "Replace your post" : "Preview your post"}
+            </Text>
             {previewImage && (
               <Image
                 source={{ uri: previewImage }}
@@ -211,7 +222,9 @@ export default function Index() {
                 style={[styles.modalButton, styles.postButton]}
                 onPress={handlePost}
               >
-                <Text style={styles.postButtonText}>Post</Text>
+                <Text style={styles.postButtonText}>
+                  {hasActivePost ? "Replace" : "Post"}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -279,7 +292,7 @@ const styles = StyleSheet.create({
     width: "100%",
     minHeight: 80,
     maxHeight: 120,
-    backgroundColor: "f5f5f5",
+    backgroundColor: "#f5f5f5",
     padding: 12,
     fontSize: 16,
     marginBottom: 24,
