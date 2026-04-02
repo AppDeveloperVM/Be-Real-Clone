@@ -6,9 +6,11 @@ import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   FlatList,
   Modal,
+  RefreshControl,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -82,10 +84,11 @@ export default function Index() {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [description, setDescription] = useState<string>("");
   const [isUploading, setIsUploading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const router = useRouter();
 
-  const { createPost, posts } = usePosts();
+  const { createPost, posts, refreshPosts } = usePosts();
   const { user } = useAuth();
 
   // check if user has an active post
@@ -96,6 +99,18 @@ export default function Index() {
       new Date(post.expires_at) > new Date(),
   );
   const hasActivePost = !!userActivePost;
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+
+    try {
+      await refreshPosts();
+    } catch (error) {
+      console.error();
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -176,7 +191,24 @@ export default function Index() {
   return (
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
       {/* LIST */}
-      <FlatList data={posts} renderItem={renderPost} />
+      <FlatList
+        data={posts}
+        renderItem={renderPost}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={[
+          posts.length === 0 ? styles.emptyContent : styles.content,
+          { flexGrow: 1 },
+        ]}
+        ListEmptyComponent={<Text>No posts found</Text>}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#000" // Color del spinner en iOS
+            colors={["#000"]} // Color del spinner en Android
+          />
+        }
+      />
 
       <TouchableOpacity style={styles.fab} onPress={showImagePicker}>
         <Text style={styles.fabText}>{hasActivePost ? "↻" : "+"}</Text>
@@ -221,10 +253,15 @@ export default function Index() {
               <TouchableOpacity
                 style={[styles.modalButton, styles.postButton]}
                 onPress={handlePost}
+                disabled={isUploading}
               >
-                <Text style={styles.postButtonText}>
-                  {hasActivePost ? "Replace" : "Post"}
-                </Text>
+                {isUploading ? (
+                  <ActivityIndicator size={24} color={"#fff"} />
+                ) : (
+                  <Text style={styles.postButtonText}>
+                    {hasActivePost ? "Replace" : "Post"}
+                  </Text>
+                )}
               </TouchableOpacity>
             </View>
           </View>
@@ -237,8 +274,7 @@ export default function Index() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
+    backgroundColor: "#fff",
   },
   fab: {
     position: "absolute",
@@ -327,6 +363,16 @@ const styles = StyleSheet.create({
     fontWeight: 600,
   },
 
+  content: {
+    padding: 16,
+    paddingBottom: 100,
+  },
+  emptyContent: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 16,
+  },
   postContainer: {
     backgroundColor: "#fff",
     borderRadius: 16,
